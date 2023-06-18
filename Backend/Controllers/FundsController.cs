@@ -34,6 +34,11 @@ namespace Backend.Controllers
         {
             try
             {
+                if (taxPercentage <= 0)
+                {
+                    return BadRequest("Tax percentage must be a positive value.");
+                }
+                
                 // Create an asset first
                 var asset = new Asset
                 {

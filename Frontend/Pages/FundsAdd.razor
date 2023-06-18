@@ -76,7 +76,7 @@
     private async Task HandleCreateFundAsync()
     {
     // Validate form fields
-        if (string.IsNullOrEmpty(FundName) || InvestmentAmount <= 0 || DefaultInterestRate <= 0 || DurationInMonths <= 0 || TaxPercentage < 0)
+        if (string.IsNullOrEmpty(FundName) || InvestmentAmount <= 0 || DurationInMonths <= 0 || TaxPercentage < 0)
         {
             await JSRuntime.InvokeVoidAsync("alert", "Please provide valid input for all fields.");
             return;

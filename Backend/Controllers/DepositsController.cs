@@ -35,6 +35,11 @@ namespace Backend.Controllers
         {
             try
             {
+                if (taxPercentage <= 0)
+                {
+                    return BadRequest("Tax percentage must be a positive value.");
+                }
+                
                 // Create an asset first
                 var asset = new Asset
                 {
@@ -65,6 +70,8 @@ namespace Backend.Controllers
 
                 _context.FixedDeposits.Add(deposit);
                 await _context.SaveChangesAsync();
+                
+                
 
                 return Ok("Deposit created successfully!");
             }

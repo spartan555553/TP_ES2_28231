@@ -117,7 +117,7 @@
     {
         try
         {
-            var reportResponse = await HttpClient.GetAsync($"http://localhost:5052/api/Assets/report?startDate={startDate.ToString("yyyy-MM-dd")}&endDate={endDate.ToString("yyyy-MM-dd")}");
+            var reportResponse = await HttpClient.GetAsync($"http://localhost:5052/api/Assets/report/profit?startDate={startDate.ToString("yyyy-MM-dd")}&endDate={endDate.ToString("yyyy-MM-dd")}");
             if (reportResponse.IsSuccessStatusCode)
             {
                 assets = await reportResponse.Content.ReadFromJsonAsync<List<AssetTDO>>();
