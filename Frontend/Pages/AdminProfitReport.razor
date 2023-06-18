@@ -1,4 +1,4 @@
-﻿@page "/report/profit"
+﻿@page "/admin/report/profit"
 
 @inject HttpClient HttpClient
 @inject NavigationManager NavigationManager
@@ -8,16 +8,19 @@
     <div class="container-fluid">
         <ul class="navbar-nav mr-auto">
             <li class="nav-item">
-                <NavLink class="nav-link" href="/assets">Ativos</NavLink>
+                <NavLink class="nav-link" href="/users">Utilizadores</NavLink>
             </li>
             <li class="nav-item">
-                <NavLink class="nav-link" href="/deposits">Depósitos a prazo</NavLink>
+                <NavLink class="nav-link" href="/admin/assets">Ativos</NavLink>
             </li>
             <li class="nav-item">
-                <NavLink class="nav-link" href="/funds">Fundos de Investimento</NavLink>
+                <NavLink class="nav-link" href="/admin/deposits">Depósitos a prazo</NavLink>
             </li>
             <li class="nav-item">
-                <NavLink class="nav-link" href="/rented">Imóveis Arrendados</NavLink>
+                <NavLink class="nav-link" href="/admin/funds">Fundos de Investimento</NavLink>
+            </li>
+            <li class="nav-item">
+                <NavLink class="nav-link" href="/admin/rented">Imóveis Arrendados</NavLink>
             </li>
         </ul>
         <ul class="navbar-nav ml-auto">

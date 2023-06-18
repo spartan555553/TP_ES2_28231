@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using BusinessLogic.Context;
 using BusinessLogic.Entities;
@@ -181,7 +176,7 @@ namespace Backend.Controllers
             }
         }
 
-        
+        //Method to delete a deposit and respective asset
         [HttpDelete("delete/{depositId}")]
         public async Task<IActionResult> DeleteSelectedDeposit(int depositId)
         {
@@ -217,6 +212,7 @@ namespace Backend.Controllers
             }
         }
 
+        //Method to update a deposit attributes
         [HttpPut("update/{depositId}")]
         public async Task<IActionResult> UpdateSelectedDeposit(int depositId,
             [FromQuery] decimal value,
@@ -228,12 +224,11 @@ namespace Backend.Controllers
             try
             {
                 var deposit = await _context.FixedDeposits
-                    .Include(d => d.IdNavigation) // Include the associated Asset
+                    .Include(d => d.IdNavigation)
                     .FirstOrDefaultAsync(d => d.Id == depositId);
 
                 if (deposit != null)
                 {
-                    // Update deposit attributes
                     deposit.Value = value;
                     deposit.Bank = bank;
                     deposit.AccountNumber = accountNumber;

@@ -44,34 +44,34 @@
             {
                 <table class="table">
                     <thead>
-                        <tr>
-                            <th>Value</th>
-                            <th>Bank</th>
-                            <th>Account Number</th>
-                            <th>Account Holders</th>
-                            <th>Annual Interest Rate</th>
-                            <th>Start Date</th>
-                            <th>Duration in Months</th>
-                            <th>Tax Percentage</th>
-                        </tr>
+                    <tr>
+                        <th>Value</th>
+                        <th>Bank</th>
+                        <th>Account Number</th>
+                        <th>Account Holders</th>
+                        <th>Annual Interest Rate</th>
+                        <th>Start Date</th>
+                        <th>Duration in Months</th>
+                        <th>Tax Percentage</th>
+                    </tr>
                     </thead>
                     <tbody>
-                        @foreach (var deposit in deposits)
-                        {
-                            <tr>
-                                <td>@deposit.Value€</td>
-                                <td>@deposit.Bank</td>
-                                <td>@deposit.AccountNumber</td>
-                                <td>@deposit.AccountHolders</td>
-                                <td>@deposit.AnnualInterestRate%</td>
-                                <td>@deposit.StartDate</td>
-                                <td>@deposit.DurationInMonths</td>
-                                <td>@deposit.TaxPercentage%</td>
-                                <td>
-                                    <input type="checkbox" checked="@deposit.Selected" @onchange="() => ToggleDepositSelection(deposit)" />
-                                </td>
-                            </tr>
-                        }
+                    @foreach (var deposit in deposits)
+                    {
+                        <tr>
+                            <td>@deposit.Value€</td>
+                            <td>@deposit.Bank</td>
+                            <td>@deposit.AccountNumber</td>
+                            <td>@deposit.AccountHolders</td>
+                            <td>@deposit.AnnualInterestRate%</td>
+                            <td>@deposit.StartDate</td>
+                            <td>@deposit.DurationInMonths</td>
+                            <td>@deposit.TaxPercentage%</td>
+                            <td>
+                                <input type="checkbox" checked="@deposit.Selected" @onchange="() => ToggleDepositSelection(deposit)" />
+                            </td>
+                        </tr>
+                    }
 
                     </tbody>
                 </table>

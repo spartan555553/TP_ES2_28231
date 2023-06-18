@@ -79,9 +79,11 @@ namespace Backend.Controllers
                 var assets = await assetsQuery
                     .Where(a => a.AssetType.Contains(searchTerm) ||
                                 (a.AssetType == "Rented Property" && a.RentedProperty.Name.Contains(searchTerm)) ||
-                                (a.AssetType == "Investment Fund" && a.InvestmentFund.InvestmentAmount.ToString().Contains(searchTerm)) || 
+                                (a.AssetType == "Investment Fund" &&
+                                 a.InvestmentFund.InvestmentAmount.ToString().Contains(searchTerm)) ||
                                 (a.AssetType == "Rented Property" && a.RentedProperty.Name.Contains(searchTerm)) ||
-                                (a.AssetType == "Fixed Deposit" && a.FixedDeposit.Value.ToString().Contains(searchTerm)))
+                                (a.AssetType == "Fixed Deposit" &&
+                                 a.FixedDeposit.Value.ToString().Contains(searchTerm)))
                     .ToListAsync();
 
                 var assetsDTOs = assets.Select(a => new
@@ -101,8 +103,7 @@ namespace Backend.Controllers
             }
         }
 
-        // Method to generate a report of assets owned by the currently logged-in user active between two dates
-        [HttpGet("report/profit")]
+        [HttpGet("report")]
         public async Task<IActionResult> GenerateAssetReportOfLoggedInUser(DateOnly startDate, DateOnly endDate)
         {
             try
@@ -140,23 +141,32 @@ namespace Backend.Controllers
                     {
                         // Access the rentedProperty object associated with the asset
                         var rentedProperty = a.RentedProperty;
-                        
+
                         // Calculation logic for AssetType Rented Properties
-                        totalProfitBeforeTax = rentedProperty.RentalValue-rentedProperty.MonthlyCondominiumFee-rentedProperty.EstimatedAnnualExpenses;
-                        totalProfitAfterTax = (rentedProperty.RentalValue-rentedProperty.MonthlyCondominiumFee-rentedProperty.EstimatedAnnualExpenses)*a.TaxPercentage;
-                        averageMonthlyProfitBeforeTax = (rentedProperty.RentalValue-rentedProperty.MonthlyCondominiumFee-rentedProperty.EstimatedAnnualExpenses)/a.DurationInMonths;
-                        averageMonthlyProfitAfterTax = ((rentedProperty.RentalValue-rentedProperty.MonthlyCondominiumFee-rentedProperty.EstimatedAnnualExpenses)*a.TaxPercentage)/a.DurationInMonths;
+                        totalProfitBeforeTax = rentedProperty.RentalValue - rentedProperty.MonthlyCondominiumFee -
+                                               rentedProperty.EstimatedAnnualExpenses;
+                        totalProfitAfterTax =
+                            (rentedProperty.RentalValue - rentedProperty.MonthlyCondominiumFee -
+                             rentedProperty.EstimatedAnnualExpenses) * a.TaxPercentage;
+                        averageMonthlyProfitBeforeTax =
+                            (rentedProperty.RentalValue - rentedProperty.MonthlyCondominiumFee -
+                             rentedProperty.EstimatedAnnualExpenses) / a.DurationInMonths;
+                        averageMonthlyProfitAfterTax =
+                            ((rentedProperty.RentalValue - rentedProperty.MonthlyCondominiumFee -
+                              rentedProperty.EstimatedAnnualExpenses) * a.TaxPercentage) / a.DurationInMonths;
                     }
                     else if (a.AssetType == "Investment Fund")
                     {
                         // Access the rentedProperty object associated with the asset
                         var fund = a.InvestmentFund;
-                        
+
                         // Calculation logic for AssetType Rented Properties
-                        totalProfitBeforeTax = fund.InvestmentAmount*fund.DefaultInterestRate;
-                        totalProfitAfterTax = (fund.InvestmentAmount*fund.DefaultInterestRate)*a.TaxPercentage;
-                        averageMonthlyProfitBeforeTax = (fund.InvestmentAmount*fund.DefaultInterestRate)/a.DurationInMonths;
-                        averageMonthlyProfitAfterTax = ((fund.InvestmentAmount * fund.DefaultInterestRate) * a.TaxPercentage) / a.DurationInMonths;
+                        totalProfitBeforeTax = fund.InvestmentAmount * fund.DefaultInterestRate;
+                        totalProfitAfterTax = (fund.InvestmentAmount * fund.DefaultInterestRate) * a.TaxPercentage;
+                        averageMonthlyProfitBeforeTax =
+                            (fund.InvestmentAmount * fund.DefaultInterestRate) / a.DurationInMonths;
+                        averageMonthlyProfitAfterTax =
+                            ((fund.InvestmentAmount * fund.DefaultInterestRate) * a.TaxPercentage) / a.DurationInMonths;
                     }
 
                     return new

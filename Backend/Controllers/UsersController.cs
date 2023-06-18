@@ -26,17 +26,15 @@ public static class UserSession
 
     public static int GetLoggedInUserId()
     {
-        // Replace this code with your actual logic to query the database and retrieve the user ID based on the username and password
         using (var dbContext = new ES2DbContext())
         {
             var user = dbContext.Users.SingleOrDefault(u => u.Username == LoggedInUser.Username && u.Password == LoggedInUser.Password);
-            return user?.UserId ?? 0; // Return the user ID if found, or 0 if not found
+            return user?.UserId ?? 0;
         }
     }
     
     public static string GetLoggedInUserType(int loggedInUserId)
     {
-        // Replace this code with your actual logic to query the database and retrieve the UserType based on the user ID
         using (var dbContext = new ES2DbContext())
         {
             var user = dbContext.Users.SingleOrDefault(u => u.UserId == loggedInUserId);

@@ -103,8 +103,9 @@
             // Creation successful
             var result = await response.Content.ReadAsStringAsync();
             Console.WriteLine("Success");
-            
-            // Navigate back to the previous link using JavaScript interop
+
+            // Delay the JavaScript interop call by a few milliseconds
+            await Task.Delay(100);
             await JSRuntime.InvokeVoidAsync("history.back");
         }
         else

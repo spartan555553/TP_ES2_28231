@@ -142,18 +142,17 @@
         }
     }
 
-    
     private void ToggleUserSelection(UserTDO user)
     {
         if (selectedUser == user)
         {
-    // Deposit is already selected, deselect it
+            // User is already selected, deselect it
             user.Selected = false;
             selectedUser = null;
         }
         else
         {
-    // Select the new deposit and deselect the previously selected one
+            // Select the new user and deselect the previously selected one
             if (selectedUser != null)
             {
                 selectedUser.Selected = false;
@@ -190,5 +189,4 @@
             Console.WriteLine($"Error: {ex.Message}");
         }
     }
-
 }
