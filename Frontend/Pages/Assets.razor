@@ -1,0 +1,139 @@
+﻿@page "/assets"
+
+@inject HttpClient HttpClient
+@inject NavigationManager NavigationManager
+
+<PageTitle>Assets</PageTitle>
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top">
+    <div class="container-fluid">
+        <ul class="navbar-nav mr-auto">
+            <li class="nav-item">
+                <NavLink class="nav-link" href="/assets">Ativos</NavLink>
+            </li>
+            <li class="nav-item">
+                <NavLink class="nav-link" href="/deposits">Depósitos a prazo</NavLink>
+            </li>
+            <li class="nav-item">
+                <NavLink class="nav-link" href="/funds">Fundos de Investimento</NavLink>
+            </li>
+            <li class="nav-item">
+                <NavLink class="nav-link" href="/rented">Imóveis Arrendados</NavLink>
+            </li>
+        </ul>
+        <ul class="navbar-nav ml-auto">
+            <li class="nav-item">
+                <NavLink class="nav-link" href="/login">Logout</NavLink>
+            </li>
+        </ul>
+    </div>
+</nav>
+
+<div class="container">
+    <div class="row">
+        <div class="col">
+            <h3 class="text-center">Ativos</h3>
+            <div class="d-flex justify-content-center mb-3">
+                <input type="text" class="form-control" @bind="@searchTerm" placeholder="Search by type" />
+                <button class="btn btn-primary ml-2" @onclick="SearchAssets">Search</button>
+            </div>
+            @if (assets != null)
+            {
+                <table class="table">
+                    <thead>
+                    <tr>
+                        <th>Asset Type</th>
+                        <th>Start Date</th>
+                        <th>Duration in Months</th>
+                        <th>Tax Percentage</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    @foreach (var asset in assets)
+                    {
+                        <tr>
+                            <td>@asset.AssetType</td>
+                            <td>@asset.StartDate</td>
+                            <td>@asset.DurationInMonths</td>
+                            <td>@asset.TaxPercentage%</td>
+                        </tr>
+                    }
+                    </tbody>
+                </table>
+            }
+            else
+            {
+                <p>Loading assets...</p>
+            }
+        </div>
+    </div>
+</div>
+
+<div class="fixed-bottom mb-3">
+    <div class="d-flex justify-content-center">
+        <a href="/report/profit" class="btn btn-primary">Profit Report</a>
+    </div>
+</div>
+
+@code {
+    private List<AssetTDO> assets;
+    private string searchTerm;
+    private int userId;
+    
+    public class AssetTDO
+    {
+        public int AssetId { get; set; }
+        public string AssetType { get; set; }
+        public DateOnly StartDate { get; set; }
+        public int DurationInMonths { get; set; }
+        public decimal TaxPercentage { get; set; }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        userId = UserSession.GetLoggedId();
+        await LoadAssets();
+    }
+
+    private async Task LoadAssets()
+    {
+        try
+        {
+            var response = await HttpClient.GetAsync($"http://localhost:5052/api/Assets/list?userId={userId}");
+            if (response.IsSuccessStatusCode)
+            {
+                assets = await response.Content.ReadFromJsonAsync<List<AssetTDO>>();
+            }
+            else
+            {
+                Console.WriteLine($"Error: {response.StatusCode}");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error: {ex.Message}");
+            assets = null;
+        }
+    }
+
+    private async Task SearchAssets()
+    {
+        try
+        {
+            var response = await HttpClient.GetAsync($"http://localhost:5052/api/Assets/search?searchTerm={searchTerm}");
+            if (response.IsSuccessStatusCode)
+            {
+                assets = await response.Content.ReadFromJsonAsync<List<AssetTDO>>();
+            }
+            else
+            {
+                Console.WriteLine($"Error: {response.StatusCode}");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error: {ex.Message}");
+            assets = null;
+        }
+    }
+
+}

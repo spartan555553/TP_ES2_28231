@@ -1,0 +1,110 @@
+﻿@page "/login"
+
+@using System
+@using System.Net.Http
+@using Microsoft.AspNetCore.Components
+@using Backend.Controllers
+@using BusinessLogic.Entities
+
+<PageTitle>Main Menu</PageTitle>
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top">
+    <div class="container-fluid">
+        <ul class="navbar-nav mr-auto">
+        </ul>
+        <ul class="navbar-nav ml-auto">
+          <li class="nav-item">
+              <NavLink class="nav-link" href="/login">Login</NavLink>
+          </li>
+          <li class="nav-item">
+              <NavLink class="nav-link" href="/register">Registo</NavLink>
+          </li>
+        </ul>
+    </div>
+</nav>
+
+<div class="container d-flex justify-content-center align-items-center" style="margin-top: 10px; height: 50vh;">
+    <div class="row">
+        <div class="col d-flex flex-column align-items-center">
+            <h2>Login</h2>
+            <div class="form-group">
+                <label for="username">Username</label>
+                <input type="text" class="form-control" id="username" placeholder="Enter your username" @bind="@Username">
+            </div>
+            <div class="form-group mt-3">
+                <label for="password">Password</label>
+                <input type="password" class="form-control" id="password" placeholder="Enter your password" @bind="@Password" >
+            </div>
+            <div class="form-group mt-3">
+                <button type="button" class="btn btn-primary" @onclick="HandleLoginAsync">Login</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    public string Username { get; set; }
+    public string Password { get; set; }
+
+    [Inject]
+    private NavigationManager navigationManager { get; set; }
+
+    private async Task HandleLoginAsync()
+    {
+        var url = $"http://localhost:5052/api/Users/login?username={Username}&password={Password}";
+
+        using var client = new HttpClient();
+        var response = await client.PostAsync(url, null);
+
+        if (response.IsSuccessStatusCode)
+        {
+    // Authentication successful
+            var result = await response.Content.ReadAsStringAsync();
+
+    // Set the logged-in user
+            UserSession.LoggedInUser = new User()
+            {
+                Username = Username,
+                Password = Password
+            };
+        
+    // Get the logged-in user ID
+            int loggedInUserId = UserSession.GetLoggedInUserId();
+            string loggedInUserType = UserSession.GetLoggedInUserType(loggedInUserId);
+            string loggedInUserStatus = UserSession.GetLoggedInUserStatus(loggedInUserId);
+
+    // Set the user ID, UserType, and UserStatus in the logged-in user object
+            UserSession.LoggedInUser.UserId = loggedInUserId;
+            UserSession.LoggedInUser.UserType = loggedInUserType;
+            UserSession.LoggedInUser.UserStatus = loggedInUserStatus;
+        
+            Console.WriteLine(UserSession.LoggedInUser.Username);
+            Console.WriteLine(UserSession.LoggedInUser.Password);
+            Console.WriteLine(UserSession.LoggedInUser.UserId);
+            Console.WriteLine(UserSession.LoggedInUser.UserType);
+            Console.WriteLine(UserSession.LoggedInUser.UserStatus);
+
+            if (UserSession.LoggedInUser.UserStatus == "Ativo")
+            {
+                Console.WriteLine("Success");
+                if(UserSession.LoggedInUser.UserType == "Admin"){
+                    navigationManager.NavigateTo("/admin/assets");
+                }
+                else
+                {
+                    navigationManager.NavigateTo("/assets");
+                }
+                
+            }
+            else
+            {
+                Console.WriteLine("User is not active. Login failed.");
+            }
+        }
+        else
+        {
+    // Authentication failed
+            var error = await response.Content.ReadAsStringAsync();
+            Console.WriteLine("Error");
+        }
+    }
+}

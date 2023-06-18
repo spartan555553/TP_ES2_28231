@@ -1,0 +1,176 @@
+﻿@page "/admin/funds"
+
+@inject HttpClient HttpClient
+@inject NavigationManager NavigationManager
+
+<PageTitle>Funds Page</PageTitle>
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top">
+    <div class="container-fluid">
+        <ul class="navbar-nav mr-auto">
+            <li class="nav-item">
+                <NavLink class="nav-link" href="/users">Utilizadores</NavLink>
+            </li>
+            <li class="nav-item">
+                <NavLink class="nav-link" href="/admin/assets">Ativos</NavLink>
+            </li>
+            <li class="nav-item">
+                <NavLink class="nav-link" href="/admin/deposits">Depósitos a prazo</NavLink>
+            </li>
+            <li class="nav-item">
+                <NavLink class="nav-link" href="/admin/funds">Fundos de Investimento</NavLink>
+            </li>
+            <li class="nav-item">
+                <NavLink class="nav-link" href="/admin/rented">Imóveis Arrendados</NavLink>
+            </li>
+        </ul>
+        <ul class="navbar-nav ml-auto">
+            <li class="nav-item">
+                <NavLink class="nav-link" href="/login">Logout</NavLink>
+            </li>
+        </ul>
+    </div>
+</nav>
+
+<div class="container">
+    <div class="row">
+        <div class="col">
+            <h3 class="text-center">Fundos de Investimento</h3>
+            <div class="d-flex justify-content-center mb-3">
+                <a class="btn btn-primary mr-4" href="/funds/create">Create Investment Fund</a>
+                <a class="btn btn-secondary mx-2" href="/funds/update/@selectedFund?.FundId">Update Investment Fund</a>
+                <a class="btn btn-danger ml-4" @onclick="DeleteSelectedFund">Remove Investment Fund</a>
+            </div>
+            @if (funds != null)
+            {
+                <table class="table">
+                    <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Investment Amount</th>
+                        <th>Default Interest Rate</th>
+                        <th>Start Date</th>
+                        <th>Duration in Months</th>
+                        <th>Tax Percentage</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    @foreach (var fund in funds)
+                    {
+                        <tr>
+                            <td>@fund.Name</td>
+                            <td>@fund.InvestmentAmount€</td>
+                            <td>@fund.DefaultInterestRate%</td>
+                            <td>@fund.StartDate</td>
+                            <td>@fund.DurationInMonths</td>
+                            <td>@fund.TaxPercentage%</td>
+                            <td>
+                                <input type="checkbox" checked="@fund.Selected" @onchange="() => ToggleFundSelection(fund)" />
+                            </td>
+                        </tr>
+                    }
+
+                    </tbody>
+                </table>
+            }
+            else
+            {
+                <p>Loading investment funds...</p>
+            }
+        </div>
+    </div>
+</div>
+
+@code {
+    private List<FundDTO> funds;
+    private FundDTO selectedFund;
+
+    public class FundDTO
+    {
+        public int FundId { get; set; }
+        public string Name { get; set; }
+        public decimal InvestmentAmount { get; set; }
+        public decimal DefaultInterestRate { get; set; }
+        public DateOnly StartDate { get; set; }
+        public int DurationInMonths { get; set; }
+        public decimal TaxPercentage { get; set; }
+        public bool Selected { get; set; }
+
+        
+    }
+    
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadFunds();
+    }
+
+    private void ToggleFundSelection(FundDTO fund)
+    {
+        if (selectedFund == fund)
+        {
+            // Fund is already selected, deselect it
+            fund.Selected = false;
+            selectedFund = null;
+        }
+        else
+        {
+            // Select the new investment fund and deselect the previously selected one
+            if (selectedFund != null)
+            {
+                selectedFund.Selected = false;
+            }
+            fund.Selected = true;
+            selectedFund = fund;
+        }
+    }
+    
+    private async Task LoadFunds()
+    {
+        try
+        {
+            var response = await HttpClient.GetAsync($"http://localhost:5052/api/Funds/get");
+            if (response.IsSuccessStatusCode)
+            {
+                funds = await response.Content.ReadFromJsonAsync<List<FundDTO>>();
+            }
+            else
+            {
+                Console.WriteLine($"Error: {response.StatusCode}");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error: {ex.Message}");
+            funds = null;
+        }
+    }
+
+    
+    private async Task DeleteSelectedFund()
+    {
+        try
+        {
+            if (selectedFund != null)
+            {
+                var response = await HttpClient.DeleteAsync($"http://localhost:5052/api/Funds/delete/{selectedFund.FundId}");
+                if (response.IsSuccessStatusCode)
+                {
+                    // Remove the deleted investment fund from the funds list
+                    funds.Remove(selectedFund);
+                    Console.WriteLine($"Investment Fund with ID {selectedFund.FundId} deleted successfully.");
+                }
+                else
+                {
+                    Console.WriteLine($"Error: {response.StatusCode}");
+                }
+            }
+            else
+            {
+                Console.WriteLine("No investment fund selected.");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error: {ex.Message}");
+        }
+    }
+}

@@ -1,0 +1,77 @@
+﻿@page "/register"
+
+<PageTitle>Registar</PageTitle>
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top">
+    <div class="container-fluid">
+        <ul class="navbar-nav mr-auto">
+            <li class="nav-item">
+                <NavLink class="nav-link" href="/assets">Ativos</NavLink>
+            </li>
+            <li class="nav-item">
+                <NavLink class="nav-link" href="/deposits">Depósitos a prazo</NavLink>
+            </li>
+            <li class="nav-item">
+                <NavLink class="nav-link" href="/funds">Fundos de Investimento</NavLink>
+            </li>
+            <li class="nav-item">
+                <NavLink class="nav-link" href="/rented">Imóveis Arrendados</NavLink>
+            </li>
+        </ul>
+        <ul class="navbar-nav ml-auto">
+            <li class="nav-item">
+                <NavLink class="nav-link">Logout</NavLink>
+            </li>
+        </ul>
+    </div>
+</nav>
+
+<div class="container d-flex justify-content-center align-items-center" style="margin-top: 10px; height: 50vh;">
+    <div class="row">
+        <div class="col d-flex flex-column align-items-center">
+            <h2>Registar</h2>
+            <div class="form-group">
+                <label for="username">Username</label>
+                <input type="text" class="form-control" id="username" placeholder="Enter your username" @bind="@Username">
+            </div>
+            <div class="form-group mt-3">
+                <label for="password">Password</label>
+                <input type="password" class="form-control" id="password" placeholder="Enter your password" @bind="@Password" >
+            </div>
+            <div class="form-group mt-3">
+                <button type="button" class="btn btn-primary"  @onclick="HandleCreateUserAsync">Registar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+@code {
+    private string Username { get; set; }
+    private string Password { get; set; }
+
+    [Inject]
+        private NavigationManager navigationManager { get; set; }
+
+    private async Task HandleCreateUserAsync()
+    {
+        var url = $"http://localhost:5052/api/Users/create?username={Username}&password={Password}";
+
+        using var client = new HttpClient();
+        var response = await client.PostAsync(url, null);
+
+        if (response.IsSuccessStatusCode)
+        {
+            // Creation successful
+            var result = await response.Content.ReadAsStringAsync();
+            Console.WriteLine("Success");
+            navigationManager.NavigateTo("/assets");
+        }
+        else
+        {
+            // Creation failed
+            var error = await response.Content.ReadAsStringAsync();
+            Console.WriteLine("Error");
+        }
+    }
+
+}

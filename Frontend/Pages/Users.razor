@@ -1,0 +1,194 @@
+﻿@page "/users"
+@using BusinessLogic.Entities
+
+@inject HttpClient HttpClient
+@inject NavigationManager NavigationManager
+
+<PageTitle>Utilizadores</PageTitle>
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top">
+    <div class="container-fluid">
+        <ul class="navbar-nav mr-auto">
+            <li class="nav-item">
+                <NavLink class="nav-link" href="/users">Utilizadores</NavLink>
+            </li>
+            <li class="nav-item">
+                <NavLink class="nav-link" href="/admin/assets">Ativos</NavLink>
+            </li>
+            <li class="nav-item">
+                <NavLink class="nav-link" href="/admin/deposits">Depósitos a prazo</NavLink>
+            </li>
+            <li class="nav-item">
+                <NavLink class="nav-link" href="/admin/funds">Fundos de Investimento</NavLink>
+            </li>
+            <li class="nav-item">
+                <NavLink class="nav-link" href="/admin/rented">Imóveis Arrendados</NavLink>
+            </li>
+        </ul>
+        <ul class="navbar-nav ml-auto">
+            <li class="nav-item">
+                <NavLink class="nav-link" href="/login">Logout</NavLink>
+            </li>
+        </ul>
+    </div>
+</nav>
+
+<div class="container">
+    <div class="row">
+        <div class="col">
+            <h3 class="text-center">Utilizadores</h3>
+            <div class="d-flex justify-content-center mb-3">
+                <input type="text" class="form-control" @bind="@searchTerm" placeholder="Search by name or type" />
+                <button class="btn btn-primary ml-2" @onclick="SearchUsers">Search</button>
+            </div>
+            <div class="d-flex justify-content-center mb-3">
+                <a class="btn btn-primary mr-4" href="/users/create">Create User</a>
+                <a class="btn btn-secondary mx-2" href="/users/update/@selectedUser?.userId">Update User</a>
+                <a class="btn btn-danger ml-4" @onclick="DisableSelectedUser">Change Selected User Status</a>
+            </div>
+            @if (users != null)
+            {
+                <table class="table">
+                    <thead>
+                    <tr>
+                        <th>Username</th>
+                        <th>Password</th>
+                        <th>User Type</th>
+                        <th>User Status</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    @foreach (var user in users)
+                    {
+                        <tr>
+                            <td>@user.Username</td>
+                            <td>@user.Password</td>
+                            <td>@user.UserType</td>
+                            <td>@user.UserStatus</td>
+                            <td>
+                                <input type="checkbox" checked="@user.Selected" @onchange="() => ToggleUserSelection(user)" />
+                            </td>
+                        </tr>
+                    }
+                    </tbody>
+                </table>
+            }
+            else
+            {
+                <p>Loading users...</p>
+            }
+        </div>
+    </div>
+</div>
+
+@code {
+    private List<UserTDO> users;
+    private UserTDO selectedUser;
+    private string searchTerm;
+    
+    public class UserTDO
+    {
+        public int userId { get; set; }
+        public string Username { get; set; }
+        public string Password { get; set; }
+        public string UserType { get; set; }
+        public string UserStatus { get; set; }
+        public bool Selected { get; set; }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadUsers();
+    }
+
+    private async Task LoadUsers()
+    {
+        try
+        {
+            var response = await HttpClient.GetAsync($"http://localhost:5052/api/Users/list");
+            if (response.IsSuccessStatusCode)
+            {
+                users = await response.Content.ReadFromJsonAsync<List<UserTDO>>();
+            }
+            else
+            {
+                Console.WriteLine($"Error: {response.StatusCode}");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error: {ex.Message}");
+            users = null;
+        }
+    }
+    
+    private async Task SearchUsers()
+    {
+        try
+        {
+            var response = await HttpClient.GetAsync($"http://localhost:5052/api/Users/search?searchTerm={searchTerm}");
+            if (response.IsSuccessStatusCode)
+            {
+                users = await response.Content.ReadFromJsonAsync<List<UserTDO>>();
+            }
+            else
+            {
+                Console.WriteLine($"Error: {response.StatusCode}");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error: {ex.Message}");
+            users = null;
+        }
+    }
+
+    
+    private void ToggleUserSelection(UserTDO user)
+    {
+        if (selectedUser == user)
+        {
+    // Deposit is already selected, deselect it
+            user.Selected = false;
+            selectedUser = null;
+        }
+        else
+        {
+    // Select the new deposit and deselect the previously selected one
+            if (selectedUser != null)
+            {
+                selectedUser.Selected = false;
+            }
+            user.Selected = true;
+            selectedUser = user;
+        }
+    }
+
+    private async Task DisableSelectedUser()
+    {
+        try
+        {
+            if (selectedUser != null)
+            {
+                var response = await HttpClient.DeleteAsync($"http://localhost:5052/api/Users/disable/{selectedUser.userId}");
+                if (response.IsSuccessStatusCode)
+                {
+                    Console.WriteLine($"Deposit with ID {selectedUser.userId} disabled successfully.");
+                    await LoadUsers();
+                }
+                else
+                {
+                    Console.WriteLine($"Error: {response.StatusCode}");
+                }
+            }
+            else
+            {
+                Console.WriteLine("No user selected.");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error: {ex.Message}");
+        }
+    }
+
+}

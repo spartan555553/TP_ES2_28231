@@ -1,0 +1,182 @@
+﻿@page "/admin/deposits"
+
+@inject HttpClient HttpClient
+@inject NavigationManager NavigationManager
+
+<PageTitle>Deposits</PageTitle>
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top">
+    <div class="container-fluid">
+        <ul class="navbar-nav mr-auto">
+            <li class="nav-item">
+                <NavLink class="nav-link" href="/users">Utilizadores</NavLink>
+            </li>
+            <li class="nav-item">
+                <NavLink class="nav-link" href="/admin/assets">Ativos</NavLink>
+            </li>
+            <li class="nav-item">
+                <NavLink class="nav-link" href="/admin/deposits">Depósitos a prazo</NavLink>
+            </li>
+            <li class="nav-item">
+                <NavLink class="nav-link" href="/admin/funds">Fundos de Investimento</NavLink>
+            </li>
+            <li class="nav-item">
+                <NavLink class="nav-link" href="/admin/rented">Imóveis Arrendados</NavLink>
+            </li>
+        </ul>
+        <ul class="navbar-nav ml-auto">
+            <li class="nav-item">
+                <NavLink class="nav-link" href="/login">Logout</NavLink>
+            </li>
+        </ul>
+    </div>
+</nav>
+
+<div class="container">
+    <div class="row">
+        <div class="col">
+            <h3 class="text-center">Deposits</h3>
+            <div class="d-flex justify-content-center mb-3">
+                <a class="btn btn-primary mr-4" href="/deposits/create">Create Deposit</a>
+                <a class="btn btn-secondary mx-2" href="/deposits/update/@selectedDeposit?.DepositId">Update Deposit</a>
+                <a class="btn btn-danger ml-4" @onclick="DeleteSelectedDeposit">Remove Deposit</a>
+            </div>
+            @if (deposits != null)
+            {
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Value</th>
+                            <th>Bank</th>
+                            <th>Account Number</th>
+                            <th>Account Holders</th>
+                            <th>Annual Interest Rate</th>
+                            <th>Start Date</th>
+                            <th>Duration in Months</th>
+                            <th>Tax Percentage</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var deposit in deposits)
+                        {
+                            <tr>
+                                <td>@deposit.Value€</td>
+                                <td>@deposit.Bank</td>
+                                <td>@deposit.AccountNumber</td>
+                                <td>@deposit.AccountHolders</td>
+                                <td>@deposit.AnnualInterestRate%</td>
+                                <td>@deposit.StartDate</td>
+                                <td>@deposit.DurationInMonths</td>
+                                <td>@deposit.TaxPercentage%</td>
+                                <td>
+                                    <input type="checkbox" checked="@deposit.Selected" @onchange="() => ToggleDepositSelection(deposit)" />
+                                </td>
+                            </tr>
+                        }
+
+                    </tbody>
+                </table>
+            }
+            else
+            {
+                <p>Loading deposits...</p>
+            }
+        </div>
+    </div>
+</div>
+
+@code {
+    private List<DepositDTO> deposits;
+    private DepositDTO selectedDeposit;
+
+    public class DepositDTO
+    {
+        public int DepositId { get; set; }
+        public decimal Value { get; set; }
+        public string Bank { get; set; }
+        public string AccountNumber { get; set; }
+        public string AccountHolders { get; set; }
+        public decimal AnnualInterestRate { get; set; }
+        public DateOnly StartDate { get; set; }
+        public int DurationInMonths { get; set; }
+        public decimal TaxPercentage { get; set; }
+        public bool Selected { get; set; }
+    }
+    
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadDeposits();
+    }
+
+    private void ToggleDepositSelection(DepositDTO deposit)
+    {
+        if (selectedDeposit == deposit)
+        {
+            // Deposit is already selected, deselect it
+            deposit.Selected = false;
+            selectedDeposit = null;
+        }
+        else
+        {
+            // Select the new deposit and deselect the previously selected one
+            if (selectedDeposit != null)
+            {
+                selectedDeposit.Selected = false;
+            }
+            deposit.Selected = true;
+            selectedDeposit = deposit;
+        }
+    }
+    
+
+    private async Task LoadDeposits()
+    {
+        try
+        {
+            var response = await HttpClient.GetAsync($"http://localhost:5052/api/Deposits/get");
+            if (response.IsSuccessStatusCode)
+            {
+                deposits = await response.Content.ReadFromJsonAsync<List<DepositDTO>>();
+            }
+            else
+            {
+                Console.WriteLine($"Error: {response.StatusCode}");
+                deposits = null; // Set deposits to null to display the error message
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error: {ex.Message}");
+            deposits = null; // Set rentedProperties to null to display the error message
+        }
+    }
+
+
+    private async Task DeleteSelectedDeposit()
+    {
+        try
+        {
+            if (selectedDeposit != null)
+            {
+                var response = await HttpClient.DeleteAsync($"http://localhost:5052/api/Deposits/delete/{selectedDeposit.DepositId}");
+                if (response.IsSuccessStatusCode)
+                {
+                    // Remove the deleted deposit from the deposits list
+                    deposits.Remove(selectedDeposit);
+                    Console.WriteLine($"Deposit with ID {selectedDeposit.DepositId} deleted successfully.");
+                }
+                else
+                {
+                    Console.WriteLine($"Error: {response.StatusCode}");
+                }
+            }
+            else
+            {
+                Console.WriteLine("No deposit selected.");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error: {ex.Message}");
+        }
+    }
+}

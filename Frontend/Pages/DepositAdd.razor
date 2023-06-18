@@ -1,0 +1,117 @@
+﻿@page "/deposits/create"
+
+@inject IJSRuntime JSRuntime
+
+<PageTitle>Create Deposit</PageTitle>
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top">
+    <div class="container-fluid">
+        <ul class="navbar-nav mr-auto">
+            <li class="nav-item">
+                <NavLink class="nav-link" href="/assets">Ativos</NavLink>
+            </li>
+            <li class="nav-item">
+                <NavLink class="nav-link" href="/deposits">Depósitos a prazo</NavLink>
+            </li>
+            <li class="nav-item">
+                <NavLink class="nav-link" href="/funds">Fundos de Investimento</NavLink>
+            </li>
+            <li class="nav-item">
+                <NavLink class="nav-link" href="/rented">Imóveis Arrendados</NavLink>
+            </li>
+        </ul>
+        <ul class="navbar-nav ml-auto">
+            <li class="nav-item">
+                <NavLink class="nav-link" href="/login">Logout</NavLink>
+            </li>
+        </ul>
+    </div>
+</nav>
+
+<div class="container">
+    <div class="row">
+        <div class="col">
+            <h3>Create Deposit</h3>
+            <form>
+                <div class="form-group mb-3">
+                    <label for="value">Value</label>
+                    <input type="number" class="form-control" id="value" placeholder="Enter the deposit value" @bind="Value">
+                </div>
+                <div class="form-group mb-3">
+                    <label for="bank">Bank</label>
+                    <input type="text" class="form-control" id="bank" placeholder="Enter the bank name" @bind="Bank">
+                </div>
+                <div class="form-group mb-3">
+                    <label for="accountNumber">Account Number</label>
+                    <input type="text" class="form-control" id="accountNumber" placeholder="Enter the account number" @bind="AccountNumber">
+                </div>
+                <div class="form-group mb-3">
+                    <label for="accountHolders">Account Holders</label>
+                    <input type="text" class="form-control" id="accountHolders" placeholder="Enter the account holders" @bind="AccountHolders">
+                </div>
+                <div class="form-group mb-3">
+                    <label for="annualInterestRate">Annual Interest Rate</label>
+                    <input type="number" class="form-control" id="annualInterestRate" placeholder="Enter the annual interest rate" @bind="AnnualInterestRate">
+                </div>
+                <div class="form-group mb-3">
+                    <label for="startDate">Start Date</label>
+                    <input type="date" class="form-control" id="startDate" @bind="StartDate">
+                </div>
+                <div class="form-group mb-3">
+                    <label for="durationInMonths">Duration (in months)</label>
+                    <input type="number" class="form-control" id="durationInMonths" placeholder="Enter the duration in months" @bind="DurationInMonths">
+                </div>
+                <div class="form-group mb-3">
+                    <label for="taxPercentage">Tax Percentage</label>
+                    <input type="number" class="form-control" id="taxPercentage" placeholder="Enter the tax percentage" @bind="TaxPercentage">
+                </div>
+                <div class="text-center">
+                    <button type="submit" class="btn btn-primary btn-lg" @onclick="HandleCreateDepositAsync">Create</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@code {
+    private decimal Value { get; set; }
+    private string Bank { get; set; }
+    private string AccountNumber { get; set; }
+    private string AccountHolders { get; set; }
+    private decimal AnnualInterestRate { get; set; }
+    private DateTime StartDate { get; set; }
+    private int DurationInMonths { get; set; }
+    private decimal TaxPercentage { get; set; }
+    
+
+    private async Task HandleCreateDepositAsync()
+    {
+        var url = $"http://localhost:5052/api/Deposits/create?" +
+                  $"value={Value}" +
+                  $"&bank={Uri.EscapeDataString(Bank)}" +
+                  $"&accountNumber={Uri.EscapeDataString(AccountNumber)}" +
+                  $"&accountHolders={Uri.EscapeDataString(AccountHolders)}" +
+                  $"&annualInterestRate={AnnualInterestRate}" +
+                  $"&startDate={Uri.EscapeDataString(StartDate.ToString("yyyy-MM-dd"))}" +
+                  $"&durationInMonths={DurationInMonths}" +
+                  $"&taxPercentage={TaxPercentage}";
+
+        using var client = new HttpClient();
+        var response = await client.PostAsync(url, null);
+
+        if (response.IsSuccessStatusCode)
+        {
+            // Creation successful
+            var result = await response.Content.ReadAsStringAsync();
+            Console.WriteLine("Success");
+            
+            // Navigate back to the previous link using JavaScript interop
+            await JSRuntime.InvokeVoidAsync("history.back");
+        }
+        else
+        {
+            // Creation failed
+            var error = await response.Content.ReadAsStringAsync();
+            Console.WriteLine("Error");
+        }
+    }
+}

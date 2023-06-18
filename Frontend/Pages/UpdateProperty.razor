@@ -1,0 +1,146 @@
+﻿@page "/rented/update/{propertyId}"
+@inject NavigationManager NavigationManager
+@using BusinessLogic.Entities
+@inject IJSRuntime JSRuntime
+
+<PageTitle>Update Rented Property</PageTitle>
+
+<h2>Update Rented Property</h2>
+
+@if (IsLoading)
+{
+    <p>Loading...</p>
+}
+else if (RentedProperty == null)
+{
+    <p>Rented property not found.</p>
+}
+else
+{
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top">
+        <div class="container-fluid">
+            <ul class="navbar-nav mr-auto">
+                <li class="nav-item">
+                    <NavLink class="nav-link" href="/users">Utilizadores</NavLink>
+                </li>
+                <li class="nav-item">
+                    <NavLink class="nav-link" href="/admin/assets">Ativos</NavLink>
+                </li>
+                <li class="nav-item">
+                    <NavLink class="nav-link" href="/admin/deposits">Depósitos a prazo</NavLink>
+                </li>
+                <li class="nav-item">
+                    <NavLink class="nav-link" href="/admin/funds">Fundos de Investimento</NavLink>
+                </li>
+                <li class="nav-item">
+                    <NavLink class="nav-link" href="/admin/rented">Imóveis Arrendados</NavLink>
+                </li>
+            </ul>
+            <ul class="navbar-nav ml-auto">
+                <li class="nav-item">
+                    <NavLink class="nav-link" href="/login">Logout</NavLink>
+                </li>
+            </ul>
+        </div>
+    </nav>
+    <div class="form-group">
+        <label for="propertyName">Property Name</label>
+        <input type="text" class="form-control" id="propertyName" placeholder="Enter the property name" @bind="@RentedProperty.Name">
+    </div>
+    <div class="form-group mt-3">
+        <label for="propertyLocation">Property Location</label>
+        <input type="text" class="form-control" id="propertyLocation" placeholder="Enter the property location" @bind="@RentedProperty.Location">
+    </div>
+    <div class="form-group mt-3">
+        <label for="propertyValue">Property Value</label>
+        <input type="number" class="form-control" id="propertyValue" placeholder="Enter the property value" @bind="@RentedProperty.PropertyValue">
+    </div>
+    <div class="form-group mt-3">
+        <label for="rentalValue">Rental Value</label>
+        <input type="number" class="form-control" id="rentalValue" placeholder="Enter the rental value" @bind="@RentedProperty.RentalValue">
+    </div>
+    <div class="form-group mt-3">
+        <label for="monthlyCondominiumFee">Monthly Condominium Fee</label>
+        <input type="number" class="form-control" id="monthlyCondominiumFee" placeholder="Enter the monthly condominium fee" @bind="@RentedProperty.MonthlyCondominiumFee">
+    </div>
+    <div class="form-group mt-3">
+        <label for="estimatedAnnualExpenses">Estimated Annual Expenses</label>
+        <input type="number" class="form-control" id="estimatedAnnualExpenses" placeholder="Enter the estimated annual expenses" @bind="@RentedProperty.EstimatedAnnualExpenses">
+    </div>
+    <div class="form-group mt-3">
+        <button type="button" class="btn btn-primary" @onclick="HandleUpdateRentedProperty">Update Rented Property</button>
+    </div>
+}
+
+@code {
+    private int rentedpropertyId;
+    private RentedProperty RentedProperty;
+    private bool IsLoading = true;
+
+    [Parameter]
+    public string PropertyId
+    {
+        get => rentedpropertyId.ToString();
+        set
+        {
+            if (int.TryParse(value, out var id))
+            {
+                rentedpropertyId = id;
+            }
+        }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Retrieve the property ID from the route parameters
+        var routeData = NavigationManager.Uri.Split('/').Last();
+        rentedpropertyId = int.Parse(routeData);
+
+        // Fetch the rented property details from the server and populate the form
+        await FetchRentedPropertyDetailsAsync();
+    }
+
+    private async Task FetchRentedPropertyDetailsAsync()
+    {
+        var rentedPropertyUrl = $"http://localhost:5052/api/RentedProperties/get/{rentedpropertyId}";
+
+        using var client = new HttpClient();
+        var rentedPropertyResponse = await client.GetAsync(rentedPropertyUrl);
+
+        if (rentedPropertyResponse.IsSuccessStatusCode)
+        {
+            RentedProperty = await rentedPropertyResponse.Content.ReadFromJsonAsync<RentedProperty>();
+        }
+        else
+        {
+            Console.WriteLine("Error retrieving rented property details");
+        }
+
+        IsLoading = false;
+    }
+
+    private async Task HandleUpdateRentedProperty()
+    {
+        if (RentedProperty != null)
+        {
+            var rentedPropertyUrl = $"http://localhost:5052/api/RentedProperties/update/{rentedpropertyId}?name={RentedProperty.Name}&location={RentedProperty.Location}&propertyValue={RentedProperty.PropertyValue}&rentalValue={RentedProperty.RentalValue}&monthlyCondominiumFee={RentedProperty.MonthlyCondominiumFee}&estimatedAnnualExpenses={RentedProperty.EstimatedAnnualExpenses}";
+
+            using var client = new HttpClient();
+            var rentedPropertyResponse = await client.PutAsync(rentedPropertyUrl, null);
+
+            if (rentedPropertyResponse.IsSuccessStatusCode)
+            {
+                Console.WriteLine("Update successful");
+
+                // Navigate back to the previous link using JavaScript interop
+                await JSRuntime.InvokeVoidAsync("history.back");
+            }
+            else
+            {
+                var errorContent = await rentedPropertyResponse.Content.ReadAsStringAsync();
+                Console.WriteLine("Error updating rented property:");
+                Console.WriteLine(errorContent);
+            }
+        }
+    }
+}

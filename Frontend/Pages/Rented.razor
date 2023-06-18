@@ -1,0 +1,183 @@
+﻿@page "/rented"
+
+@inject HttpClient HttpClient
+@inject NavigationManager NavigationManager
+
+<PageTitle>Rented Properties</PageTitle>
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top">
+    <div class="container-fluid">
+        <ul class="navbar-nav mr-auto">
+            <li class="nav-item">
+                <NavLink class="nav-link" href="/assets">Ativos</NavLink>
+            </li>
+            <li class="nav-item">
+                <NavLink class="nav-link" href="/deposits">Depósitos a prazo</NavLink>
+            </li>
+            <li class="nav-item">
+                <NavLink class="nav-link" href="/funds">Fundos de Investimento</NavLink>
+            </li>
+            <li class="nav-item">
+                <NavLink class="nav-link" href="/rented">Imóveis Arrendados</NavLink>
+            </li>
+        </ul>
+        <ul class="navbar-nav ml-auto">
+            <li class="nav-item">
+                <NavLink class="nav-link" href="/login">Logout</NavLink>
+            </li>
+        </ul>
+    </div>
+</nav>
+
+<div class="container">
+    <div class="row">
+        <div class="col">
+            <h3 class="text-center">Imóveis Arrendados</h3>
+              <div class="d-flex justify-content-center mb-3">
+                <a class="btn btn-primary mr-4" href="/rented/create">Create Property</a>
+                <a class="btn btn-secondary mx-2" href="/rented/update/@selectedProperty?.RentedPropertyId">Update Property</a>
+                  <a class="btn btn-danger ml-4" @onclick="DeleteSelectedProperty">Remove Property</a>
+              </div>
+              @if (rentedProperties != null)
+              {
+                  <table class="table">
+                      <thead>
+                          <tr>
+                              <th>Name</th>
+                              <th>Location</th>
+                              <th>Property Value</th>
+                              <th>Rental Value</th>
+                              <th>Monthly Condominium Fee</th>
+                              <th>Estimated Annual Expenses</th>
+                              <th>Start Date</th>
+                              <th>Duration in Months</th>
+                              <th>Tax Percentage</th>
+                          </tr>
+                      </thead>
+                      <tbody>
+                          @foreach (var rentedProperty in rentedProperties)
+                          {
+                              <tr>
+                                  <td>@rentedProperty.Name</td>
+                                  <td>@rentedProperty.Location</td>
+                                  <td>@rentedProperty.PropertyValue€</td>
+                                  <td>@rentedProperty.RentalValue€</td>
+                                  <td>@rentedProperty.MonthlyCondominiumFee€</td>
+                                  <td>@rentedProperty.EstimatedAnnualExpenses€</td>
+                                  <td>@rentedProperty.StartDate</td>
+                                  <td>@rentedProperty.DurationInMonths</td>
+                                  <td>@rentedProperty.TaxPercentage%</td>
+                                  <td>
+                                      <input type="checkbox" checked="@rentedProperty.Selected" @onchange="() => TogglePropertySelection(rentedProperty)" />
+                                  </td>
+                              </tr>
+                          }
+
+                      </tbody>
+                  </table>
+              }
+              else
+              {
+                  <p>Loading rented properties...</p>
+              }  
+        </div>
+    </div>
+</div>
+
+@code {
+    private List<RentedPropertyDTO> rentedProperties;
+    private RentedPropertyDTO selectedProperty;
+    private int userId;
+    
+    public class RentedPropertyDTO
+    {
+        public int RentedPropertyId { get; set; }
+        public string Name { get; set; }
+        public string Location { get; set; }
+        public decimal PropertyValue { get; set; }
+        public decimal RentalValue { get; set; }
+        public decimal MonthlyCondominiumFee { get; set; }
+        public decimal EstimatedAnnualExpenses { get; set; }
+        public DateTime StartDate { get; set; }
+        public int DurationInMonths { get; set; }
+        public decimal TaxPercentage { get; set; }
+        public bool Selected { get; set; }
+    }
+    
+    protected override async Task OnInitializedAsync()
+    {
+        userId = UserSession.GetLoggedId();
+        await LoadRentedProperties();
+    }
+
+    private void TogglePropertySelection(RentedPropertyDTO rentedProperty)
+    {
+        if (selectedProperty == rentedProperty)
+        {
+    // Property is already selected, deselect it
+            rentedProperty.Selected = false;
+            selectedProperty = null;
+        }
+        else
+        {
+    // Select the new property and deselect the previously selected one
+            if (selectedProperty != null)
+            {
+                selectedProperty.Selected = false;
+            }
+            rentedProperty.Selected = true;
+            selectedProperty = rentedProperty;
+        }
+    }
+    
+
+    private async Task LoadRentedProperties()
+    {
+        try
+        {
+            var response = await HttpClient.GetAsync($"http://localhost:5052/api/RentedProperties/list?userId={userId}");
+            if (response.IsSuccessStatusCode)
+            {
+                rentedProperties = await response.Content.ReadFromJsonAsync<List<RentedPropertyDTO>>();
+            }
+            else
+            {
+                Console.WriteLine($"Error: {response.StatusCode}");
+                rentedProperties = null; // Set rentedProperties to null to display the error message
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error: {ex.Message}");
+            rentedProperties = null; // Set rentedProperties to null to display the error message
+        }
+    }
+
+    private async Task DeleteSelectedProperty()
+    {
+        try
+        {
+            if (selectedProperty != null)
+            {
+                var response = await HttpClient.DeleteAsync($"http://localhost:5052/api/RentedProperties/delete/{selectedProperty.RentedPropertyId}");
+                if (response.IsSuccessStatusCode)
+                {
+    // Remove the deleted property from the rentedProperties list
+                    rentedProperties.Remove(selectedProperty);
+                    Console.WriteLine($"Property with ID {selectedProperty.RentedPropertyId} deleted successfully.");
+                }
+                else
+                {
+                    Console.WriteLine($"Error: {response.StatusCode}");
+                }
+            }
+            else
+            {
+                Console.WriteLine("No property selected.");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error: {ex.Message}");
+        }
+    }
+}

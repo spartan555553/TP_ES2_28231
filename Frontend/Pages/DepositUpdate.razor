@@ -1,0 +1,140 @@
+﻿@page "/deposits/update/{depositId}"
+
+@inject NavigationManager NavigationManager
+@using BusinessLogic.Entities
+@inject IJSRuntime JSRuntime
+
+<PageTitle>Update Deposit</PageTitle>
+
+<h2>Update Deposit</h2>
+
+@if (IsLoading)
+{
+    <p>Loading...</p>
+}
+else if (FixedDeposit == null)
+{
+    <p>Deposit not found.</p>
+}
+else
+{
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top">
+        <div class="container-fluid">
+            <ul class="navbar-nav mr-auto">
+                <li class="nav-item">
+                    <NavLink class="nav-link" href="/admin/users">Users</NavLink>
+                </li>
+                <li class="nav-item">
+                    <NavLink class="nav-link" href="/admin/assets">Assets</NavLink>
+                </li>
+                <li class="nav-item">
+                    <NavLink class="nav-link" href="/admin/funds">Investment Funds</NavLink>
+                </li>
+                <li class="nav-item">
+                    <NavLink class="nav-link" href="/admin/rented">Rented Properties</NavLink>
+                </li>
+            </ul>
+            <ul class="navbar-nav ml-auto">
+                <li class="nav-item">
+                    <NavLink class="nav-link" href="/login">Logout</NavLink>
+                </li>
+            </ul>
+        </div>
+    </nav>
+    <div class="form-group">
+        <label for="value">Value</label>
+        <input type="number" class="form-control" id="value" placeholder="Enter the deposit value" @bind="@FixedDeposit.Value">
+    </div>
+    <div class="form-group mt-3">
+        <label for="bank">Bank</label>
+        <input type="text" class="form-control" id="bank" placeholder="Enter the bank name" @bind="@FixedDeposit.Bank">
+    </div>
+    <div class="form-group mt-3">
+        <label for="accountNumber">Account Number</label>
+        <input type="text" class="form-control" id="accountNumber" placeholder="Enter the account number" @bind="@FixedDeposit.AccountNumber">
+    </div>
+    <div class="form-group mt-3">
+        <label for="accountHolders">Account Holders</label>
+        <input type="text" class="form-control" id="accountHolders" placeholder="Enter the account holders" @bind="@FixedDeposit.AccountHolders">
+    </div>
+    <div class="form-group mt-3">
+        <label for="annualInterestRate">Annual Interest Rate</label>
+        <input type="number" class="form-control" id="annualInterestRate" placeholder="Enter the annual interest rate" @bind="@FixedDeposit.AnnualInterestRate">
+    </div>
+    <div class="form-group mt-3">
+        <button type="button" class="btn btn-primary" @onclick="HandleUpdateDeposit">Update Deposit</button>
+    </div>
+}
+
+@code {
+    private int depositId;
+    private FixedDeposit FixedDeposit;
+    private bool IsLoading = true;
+
+    [Parameter]
+    public string DepositId
+    {
+        get => depositId.ToString();
+        set
+        {
+            if (int.TryParse(value, out var id))
+            {
+                depositId = id;
+            }
+        }
+    }
+    
+     protected override async Task OnInitializedAsync()
+    {
+        // Retrieve the property ID from the route parameters
+        var routeData = NavigationManager.Uri.Split('/').Last();
+        depositId = int.Parse(routeData);
+
+        // Fetch the rented property details from the server and populate the form
+        await FetchDepositDetailsAsync();
+    }
+
+    private async Task FetchDepositDetailsAsync()
+    {
+        var depositUrl = $"http://localhost:5052/api/Deposits/get/{depositId}";
+
+        using var client = new HttpClient();
+        var rentedPropertyResponse = await client.GetAsync(depositUrl);
+
+        if (rentedPropertyResponse.IsSuccessStatusCode)
+        {
+            FixedDeposit = await rentedPropertyResponse.Content.ReadFromJsonAsync<FixedDeposit>();
+        }
+        else
+        {
+            Console.WriteLine("Error retrieving deposit details");
+        }
+
+        IsLoading = false;
+    }
+
+    private async Task HandleUpdateDeposit()
+    {
+        if (FixedDeposit != null)
+        {
+            var depositUrl = $"http://localhost:5052/api/Deposits/update/{depositId}?value={FixedDeposit.Value}&bank={FixedDeposit.Bank}&accountNumber={FixedDeposit.AccountNumber}&accountHolders={FixedDeposit.AccountHolders}&annualInterestRate={FixedDeposit.AnnualInterestRate}";
+
+            using var client = new HttpClient();
+            var depositResponse = await client.PutAsync(depositUrl, null);
+
+            if (depositResponse.IsSuccessStatusCode)
+            {
+                Console.WriteLine("Update successful");
+
+                // Navigate back to the previous link using JavaScript interop
+                await JSRuntime.InvokeVoidAsync("history.back");
+            }
+            else
+            {
+                var errorContent = await depositResponse.Content.ReadAsStringAsync();
+                Console.WriteLine("Error updating deposit:");
+                Console.WriteLine(errorContent);
+            }
+        }
+    }
+}
